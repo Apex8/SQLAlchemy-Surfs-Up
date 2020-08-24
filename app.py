@@ -1,4 +1,5 @@
 # Import Dependencies
+import pandas as pd
 import numpy as np
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
@@ -8,7 +9,7 @@ from flask import Flask, jsonify
 import datetime as dt
 
 # Create engine
-engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite", connect_args={'check_same_thread': False}
 
 # Reflect Database
 base = automap_base()
@@ -67,7 +68,6 @@ def precipitation():
     for result in results:
         precipDict = {result.date: result.prcp, "Station": result.station}
         precipData.append(precipDict)
-
     return jsonify(precipData)
 
 
@@ -89,7 +89,6 @@ def temperature():
     for result in results:
         tempDict = {result.date: result.tobs, "Station": result.station}
         tempData.append(tempDict)
-
     return jsonify(tempData)
 
 @app.route("/api/v1.0/StartDate")
