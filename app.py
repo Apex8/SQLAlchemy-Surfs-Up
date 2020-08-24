@@ -3,7 +3,7 @@ import numpy as np
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, inspect
 from flask import Flask, jsonify
 import datetime as dt
 
@@ -15,44 +15,47 @@ base = automap_base()
 base.prepare(engine, reflect = True)
 
 # Create save table references
-measurement = base.classes.measurement
-station = base.classes.station
+Measurement = base.classes.measurement
+Station = base.classes.station
 
 # Create session
 session = Session(engine)
+inspector = inspect(engine)
+inspector.get_table_names()
 
 # Setup Flask
 app = Flask(__name__)
 
-# Setup Flask Routes
+# Setup Flask (@app) Routes
 
 
 @app.route("/")
 def main():
     """List all routes that are available."""
     return (
+        f"Welcome to Surf's Up!: Hawai'i Climate API<br/>"
         f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/Precipitation<br/>"
+        f"/api/v1.0/Stations<br/>"
+        f"/api/v1.0/Tobs<br/>"
+        f"/api/v1.0/StartDate<br/>"
+        f"/api/v1.0/StartDateEndDate<end>"
     )
 
 
-@app.route("/api/v1.0/precipitation")
-def precipitation():
+@app.route("/api/v1.0/Precipitation")
+def Precipitation():
     """Return the JSON representation of your dictionary."""
     print("Received precipitation api request.")
 
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", measurement.date))).all()
+    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
     max_date_string = final_date_query[0][0]
     max_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
     begin_date = max_date - dt.timedelta(365)
 
      # Query for all the precipitation data
-    precipitation_data = session.query(func.strftime("%Y-%m-%d", measurement.date), measurement.prcp).\
-        filter(func.strftime("%Y-%m-%d", measurement.date) >= begin_date).all()
+    precipitation_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
     
     # Create Dictionaries
     results_dict = {}
@@ -62,47 +65,47 @@ def precipitation():
     return jsonify(results_dict)
 
 
-@app.route("/api/v1.0/stations")
-def stations():
+@app.route("/api/v1.0/Stations")
+def Stations():
     """Return a JSON list of stations from the dataset."""
     print("Received station api request.")
 
     # Query for the stations list
-    stations = session.query(station).all()
+    stations = session.query(Station.station, Station.name).all()
 
     # Now create a list of dictionaries
     stations_list = []
     for station in stations:
         stations_dict = {}
-        stations_dict["id"] = station.id
-        stations_dict["station"] = station.station
-        stations_dict["name"] = station.name
-        stations_dict["latitude"] = station.latitude
-        stations_dict["longitude"] = station.longitude
-        stations_dict["elevation"] = station.elevation
+        stations_dict["id"] = Station.id
+        stations_dict["station"] = Station.station
+        stations_dict["name"] = Station.name
+        stations_dict["latitude"] = Station.latitude
+        stations_dict["longitude"] = Station.longitude
+        stations_dict["elevation"] = Station.elevation
         stations_list.append(stations_dict)
 
     return jsonify(stations_list)
 
 
-@app.route("/api/v1.0/tobs")
-def tobs():
+@app.route("/api/v1.0/Tobs")
+def Tobs():
     """Return a JSON list of temperature observations for the previous year."""
     print("Received tobs api request.")
 
     # Define temp data for last year and find the max date, using that to calculate the beginning date
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", measurement.date))).all()
+    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
     max_date_string = final_date_query[0][0]
     final_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
     begin_date = final_date - dt.timedelta(365)
 
     # Find the temperature measurements for last year
-    results = session.query(measurement).\
-        filter(func.strftime("%Y-%m-%d", measurement.date) >= begin_date).all()
+    temp_year = session.query(Measurement).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
 
     # Create a list of dictionaries, one for each app route
     tobs_list = []
-    for result in results:
+    for result in temp_year:
         tobs_dict = {}
         tobs_dict["date"] = result.date
         tobs_dict["station"] = result.station
@@ -111,16 +114,16 @@ def tobs():
 
     return jsonify(tobs_list)
 
-@app.route("/api/v1.0/<start>")
-def start(start):
+@app.route("/api/v1.0/StartDate")
+def StartDate(start):
     print("Received only start date API request.")
 
     # Last date in the database
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", measurement.date))).all()
+    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
     max_date = final_date_query[0][0]
 
     # Calculate the temperatures
-    temps = calc_temps(start, max_date)
+    temps = Measurement(start, max_date)
 
     # Now create a list of dictionaries
     start_list = []
@@ -132,13 +135,13 @@ def start(start):
 
     return jsonify(start_list)
 
-@app.route("/api/v1.0/<start>/<end>")
-def start_end(start, end):
+@app.route("/api/v1.0/StartDateEndDate")
+def StartDateEndDate(start, end):
     """Return a JSON list for a given start or start-end range."""
     print("Received start date and end date API request.")
 
     # Calculate the temperatures
-    temps = calc_temps(start, end)
+    temps = Measurement(start, end)
 
     # Now create a list of dictionaries
     return_list = []
@@ -151,4 +154,4 @@ def start_end(start, end):
     return jsonify(return_list)
 
 if __name__ == "__main__":
-    app.run(debug = False)
+    app.run(debug = True)
