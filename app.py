@@ -41,8 +41,7 @@ def main():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/temperature<br/>"
-        f"/api/v1.0/Simple_Search<start><br/>"
-        f"/api/v1.0/Advanced_Search<start>/<end>"
+        f"/api/v1.0/<start>Start_Date/<end>End_date"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -65,11 +64,13 @@ def temperature():
     temp_dict = list(np.ravel(temperature))
     return jsonify(temp_dict)
 
+@app.route("/api/v1.0/<Start_date>")
+@app.route("/api/v1.0/<Start_date>/<End_date>")
+def simple_search(Start_date, End_date="2017-08-23"):
+    result = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter((Measurement.date>=Start_date)&(Measurement.date>=End_date)).all()
+    return jsonify(result)
 
-@app.route("/api/v1.0/Simple_Search<date>")
-def simple_search(date):
-    simple_search = session.query((Measurement.date, func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
-            filter(Measurement.date)>=date).all()
-
+    
 if __name__ == '__main__':
     app.run(debug=True)
