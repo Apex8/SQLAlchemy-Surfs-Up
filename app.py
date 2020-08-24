@@ -48,19 +48,16 @@ def main():
     return (
         f"Surf's Up, it's vacation time!: Hawai'i Climate API<br/>"
         f"Available Routes:<br/>"
-        f"/api/v1.0/Precipitation<br/>"
-        f"/api/v1.0/Stations<br/>"
-        f"/api/v1.0/Temperature<br/>"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/temperature<br/>"
         f"/api/v1.0/StartDate<br/>"
         f"/api/v1.0/StartDateEndDate<end>"
     )
 
 
-@app.route("/api/v1.0/Precipitation")
+@app.route("/api/v1.0/precipitaton")
 def precipitation():
-    """Return the JSON representation of your dictionary for Precipitation."""
-    print("Received precipitation api request.")
-
     results = (session.query(Measurement.date, Measurement.prcp, Measurement.station)
                       .filter(Measurement.date > yearBefore)
                       .order_by(Measurement.date)
@@ -74,20 +71,15 @@ def precipitation():
     return jsonify(precipData)
 
 
-@app.route("/api/v1.0/Stations")
+@app.route("/api/v1.0/stations")
 def stations():
-    """Return a JSON list of stations from the dataset."""
-    print("Received station api request.")
-
     results = session.query(Station.name).all()
     all_stations = list(np.ravel(results))
     return jsonify(all_stations)
 
-@app.route("/api/v1.0/Temperature")
-def temperature():
-    """Return a JSON list of temperature observations for the previous year."""
-    print("Received tobs api request.")
 
+@app.route("/api/v1.0/temperature")
+def temperature():
     results = (session.query(Measurement.date, Measurement.tobs, Measurement.station)
                       .filter(Measurement.date > yearBefore)
                       .order_by(Measurement.date)
