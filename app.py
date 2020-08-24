@@ -60,3 +60,6 @@ def precipitation():
     for result in precipitation_data:
         results_dict[result[0]] = result[1]
     return jsonify(results_dict)
+
+    if __name__ == "__main__":
+    app.run(debug = True)
