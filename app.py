@@ -72,5 +72,14 @@ def stations():
     sec_dict = list(np.ravel(results2))
     return jsonify(sec_dict)
 
+
+@app.route("/api/v1.0/temperature")
+def temperature():
+    results3 = session.query(Measurement.date, Measurement.tobs).\
+            filter(Measurement.date>="2016-08-23").\
+            filter(Measurement.date<="2017-08-23").all()
+    temp_dict = list(np.ravel(results3))
+    return jsonify(temp_dict)
+
 if __name__ == '__main__':
     app.run(debug=True)
