@@ -32,7 +32,7 @@ app = Flask(__name__)
 def main():
     """List all routes that are available."""
     return (
-        f"Aloha! Welcome to the Surfs Up API!"
+        f"Aloha! Welcome to the Surfs Up API!<br/>"
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
