@@ -26,6 +26,19 @@ inspector.get_table_names()
 # Setup Flask
 app = Flask(__name__)
 
+latestDate = (session.query(Measurement.date)
+                .order_by(Measurement.date.desc())
+                .first())
+latestDate = list(np.ravel(latestDate))[0]
+
+latestDate = dt.datetime.strptime(latestDate, '%Y-%m-%d')
+latestYear = int(dt.datetime.strftime(latestDate, '%Y'))
+latestMonth = int(dt.datetime.strftime(latestDate, '%m'))
+latestDay = int(dt.datetime.strftime(latestDate, '%d'))
+
+yearBefore = dt.date(latestYear, latestMonth, latestDay) - dt.timedelta(days=365)
+yearBefore = dt.datetime.strftime(yearBefore, '%Y-%m-%d')
+
 # Setup Flask (@app) Routes
 
 
@@ -33,11 +46,11 @@ app = Flask(__name__)
 def main():
     """List all routes that are available."""
     return (
-        f"Welcome to Surf's Up!: Hawai'i Climate API<br/>"
+        f"Surf's Up, it's vacation time!: Hawai'i Climate API<br/>"
         f"Available Routes:<br/>"
         f"/api/v1.0/Precipitation<br/>"
         f"/api/v1.0/Stations<br/>"
-        f"/api/v1.0/Tobs<br/>"
+        f"/api/v1.0/Temperature<br/>"
         f"/api/v1.0/StartDate<br/>"
         f"/api/v1.0/StartDateEndDate<end>"
     )
@@ -45,24 +58,20 @@ def main():
 
 @app.route("/api/v1.0/Precipitation")
 def Precipitation():
-    """Return the JSON representation of your dictionary."""
+    """Return the JSON representation of your dictionary for Precipitation."""
     print("Received precipitation api request.")
 
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
-    max_date_string = final_date_query[0][0]
-    max_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
-    begin_date = max_date - dt.timedelta(365)
-
-     # Query for all the precipitation data
-    precipitation_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).\
-        filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
+    results = (session.query(Measurement.date, Measurement.prcp, Measurement.station)
+                      .filter(Measurement.date > yearBefore)
+                      .order_by(Measurement.date)
+                      .all())
     
-    # Create Dictionaries
-    results_dict = {}
-    for result in precipitation_data:
-        results_dict[result[0]] = result[1]
+    precipData = []
+    for result in results:
+        precipDict = {result.date: result.prcp, "Station": result.station}
+        precipData.append(precipDict)
 
-    return jsonify(results_dict)
+    return jsonify(precipData)
 
 
 @app.route("/api/v1.0/Stations")
@@ -70,49 +79,26 @@ def Stations():
     """Return a JSON list of stations from the dataset."""
     print("Received station api request.")
 
-    # Query for the stations list
-    stations = session.query(Station.station, Station.name).all()
+    results = session.query(Station.name).all()
+    all_stations = list(np.ravel(results))
+    return jsonify(all_stations)
 
-    # Now create a list of dictionaries
-    stations_list = []
-    for station in stations:
-        stations_dict = {}
-        stations_dict["id"] = Station.id
-        stations_dict["station"] = Station.station
-        stations_dict["name"] = Station.name
-        stations_dict["latitude"] = Station.latitude
-        stations_dict["longitude"] = Station.longitude
-        stations_dict["elevation"] = Station.elevation
-        stations_list.append(stations_dict)
-
-    return jsonify(stations_list)
-
-
-@app.route("/api/v1.0/Tobs")
-def Tobs():
+@app.route("/api/v1.0/Temperature")
+def Temperature():
     """Return a JSON list of temperature observations for the previous year."""
     print("Received tobs api request.")
 
-    # Define temp data for last year and find the max date, using that to calculate the beginning date
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
-    max_date_string = final_date_query[0][0]
-    final_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
-    begin_date = final_date - dt.timedelta(365)
+    results = (session.query(Measurement.date, Measurement.tobs, Measurement.station)
+                      .filter(Measurement.date > yearBefore)
+                      .order_by(Measurement.date)
+                      .all())
 
-    # Find the temperature measurements for last year
-    temp_year = session.query(Measurement).\
-        filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
+    tempData = []
+    for result in results:
+        tempDict = {result.date: result.tobs, "Station": result.station}
+        tempData.append(tempDict)
 
-    # Create a list of dictionaries, one for each app route
-    tobs_list = []
-    for result in temp_year:
-        tobs_dict = {}
-        tobs_dict["date"] = result.date
-        tobs_dict["station"] = result.station
-        tobs_dict["tobs"] = result.tobs
-        tobs_list.append(tobs_dict)
-
-    return jsonify(tobs_list)
+    return jsonify(tempData)
 
 @app.route("/api/v1.0/StartDate")
 def StartDate(start):
