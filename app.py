@@ -47,23 +47,29 @@ def main():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    results1 = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date>="2016-08-23").all()
-    prec_dict = list(np.ravel(results1))
+    precipitation = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date>="2016-08-23").all()
+    prec_dict = list(np.ravel(precipitation))
     return jsonify(prec_dict)
 
 
 @app.route("/api/v1.0/stations")
 def stations():
-    results2 = session.query(Station.station, Station.name).all()
-    stat_dict = list(np.ravel(results2))
+    stations = session.query(Station.station, Station.name).all()
+    stat_dict = list(np.ravel(stations))
     return jsonify(stat_dict)
 
 
 @app.route("/api/v1.0/temperature")
 def temperature():
-    results3 = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date>="2016-08-23").filter(Measurement.date<="2017-08-23").all()
-    temp_dict = list(np.ravel(results3))
+    temperature = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date>="2016-08-23").filter(Measurement.date<="2017-08-23").all()
+    temp_dict = list(np.ravel(temperature))
     return jsonify(temp_dict)
 
+
+@app.route("/api/v1.0/Simple_Search<date>")
+def Simple_Search(date):
+    Simple_Search = session.query((Measurement.date, func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
+            filter(Measurement.date)>=date).all()
+            
 if __name__ == '__main__':
     app.run(debug=True)
