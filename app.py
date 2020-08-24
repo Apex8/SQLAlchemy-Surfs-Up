@@ -57,7 +57,7 @@ def main():
 
 
 @app.route("/api/v1.0/Precipitation")
-def Precipitation():
+def precipitation():
     """Return the JSON representation of your dictionary for Precipitation."""
     print("Received precipitation api request.")
 
@@ -75,7 +75,7 @@ def Precipitation():
 
 
 @app.route("/api/v1.0/Stations")
-def Stations():
+def stations():
     """Return a JSON list of stations from the dataset."""
     print("Received station api request.")
 
@@ -84,7 +84,7 @@ def Stations():
     return jsonify(all_stations)
 
 @app.route("/api/v1.0/Temperature")
-def Temperature():
+def temperature():
     """Return a JSON list of temperature observations for the previous year."""
     print("Received tobs api request.")
 
