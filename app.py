@@ -43,8 +43,7 @@ def main():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    """Return the JSON representation of your dictionary."""
-
+    """Return the JSON for precipitation."""
     print("Received precipitation api request.")
 
     # Query for the first and final dates
@@ -57,9 +56,7 @@ def precipitation():
     precipitation_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).\
         filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
     
-
     results_dict = {}
     for result in precipitation_data:
         results_dict[result[0]] = result[1]
-
     return jsonify(results_dict)
