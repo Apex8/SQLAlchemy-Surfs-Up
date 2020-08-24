@@ -26,6 +26,10 @@ session = Session(engine)
 # Setup Flask
 app = Flask(__name__)
 
+def calc_temps(start_date, end_date):
+    return session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+
 # Setup Flask Routes
 
 @app.route("/")
@@ -43,23 +47,20 @@ def main():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    """Return the JSON for precipitation."""
+    """Return a JSON representation of a dictionary where the date is the key and the value is the precipitation value"""
     print("Received precipitation api request.")
 
-    # Query for the first and final dates
+    #We find precipitation data for the last year.  First we find the last date in the database and use that to find the first day in the database.
     final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
     max_date_string = final_date_query[0][0]
-    max_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
-    begin_date = max_date - dt.timedelta(365)
+    max_date = datetime.datetime.strptime(max_date_string, "%Y-%m-%d")
+    begin_date = max_date - datetime.timedelta(366)
 
-    # Query for all the precipitation data for all the dates
-    precipitation_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).\
-        filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
+    #find dates and precipitation amounts
+    precip_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
     
+    #prepare the dictionary with the date as the key and the prcp value as the value
     results_dict = {}
-    for result in precipitation_data:
+    for result in precip_data:
         results_dict[result[0]] = result[1]
     return jsonify(results_dict)
-
-    if __name__ == "__main__":
-    app.run(debug = False)
