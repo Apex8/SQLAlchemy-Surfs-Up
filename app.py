@@ -72,3 +72,5 @@ def stations():
     sec_dict = list(np.ravel(results2))
     return jsonify(sec_dict)
 
+if __name__ == '__main__':
+    app.run(debug=True)
