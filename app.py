@@ -47,37 +47,21 @@ def main():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    """Return a JSON representation of a dictionary where the date is the key and the value is the precipitation value"""
-    print("Received precipitation api request.")
-
-    # Find precipitation data for the last year.  First we find the last date in the database and use that to find the first day in the database.
-    final_date_query = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date))).all()
-    max_date_string = final_date_query[0][0]
-    max_date = dt.datetime.strptime(max_date_string, "%Y-%m-%d")
-    begin_date = max_date - dt.timedelta(366)
-
-    # Find dates and precipitation amounts
-    precip_data = session.query(func.strftime("%Y-%m-%d", Measurement.date), Measurement.prcp).filter(func.strftime("%Y-%m-%d", Measurement.date) >= begin_date).all()
-    
-    # Prepare the dictionary with the date as the key and the prcp value as the value
-    results_dict = {}
-    for result in precip_data:
-        results_dict[result[0]] = result[1]
-    return jsonify(results_dict)
+    results1 = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date>="2016-08-23").all()
+    prec_dict = list(np.ravel(results1))
+    return jsonify(prec_dict)
 
 
 @app.route("/api/v1.0/stations")
 def stations():
     results2 = session.query(Station.station, Station.name).all()
-    sec_dict = list(np.ravel(results2))
-    return jsonify(sec_dict)
+    stat_dict = list(np.ravel(results2))
+    return jsonify(stat_dict)
 
 
 @app.route("/api/v1.0/temperature")
 def temperature():
-    results3 = session.query(Measurement.date, Measurement.tobs).\
-            filter(Measurement.date>="2016-08-23").\
-            filter(Measurement.date<="2017-08-23").all()
+    results3 = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date>="2016-08-23").filter(Measurement.date<="2017-08-23").all()
     temp_dict = list(np.ravel(results3))
     return jsonify(temp_dict)
 
