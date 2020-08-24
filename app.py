@@ -71,3 +71,4 @@ def stations():
     results2 = session.query(Station.station, Station.name).all()
     sec_dict = list(np.ravel(results2))
     return jsonify(sec_dict)
+
