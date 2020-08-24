@@ -67,9 +67,9 @@ def temperature():
 
 
 @app.route("/api/v1.0/Simple_Search<date>")
-def Simple_Search(date):
-    Simple_Search = session.query((Measurement.date, func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
+def simple_search(date):
+    simple_search = session.query((Measurement.date, func.avg(Measurement.tobs), func.max(Measurement.tobs), func.min(Measurement.tobs)).\
             filter(Measurement.date)>=date).all()
-            
+
 if __name__ == '__main__':
     app.run(debug=True)
