@@ -4,25 +4,24 @@ import numpy as np
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func, inspect
+from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
 import datetime as dt
 
 # Create engine
-engine = create_engine("sqlite:///Resources/hawaii.sqlite", connect_args={'check_same_thread': False}
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
 # Reflect Database
-base = automap_base()
-base.prepare(engine, reflect = True)
+Base = automap_base()
+Base.prepare(engine, reflect = True)
+Base.classes.keys()
 
 # Create save table references
-Measurement = base.classes.measurement
-Station = base.classes.station
+Measurement = Base.classes.measurement
+Station = Base.classes.station
 
 # Create session
 session = Session(engine)
-inspector = inspect(engine)
-inspector.get_table_names()
 
 # Setup Flask
 app = Flask(__name__)
@@ -49,15 +48,15 @@ def main():
     return (
         f"Surf's Up, it's vacation time!: Hawai'i Climate API<br/>"
         f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/temperature<br/>"
+        f"/api/v1.0/Precipitation<br/>"
+        f"/api/v1.0/Stations<br/>"
+        f"/api/v1.0/Temperature<br/>"
         f"/api/v1.0/StartDate<br/>"
         f"/api/v1.0/StartDateEndDate<end>"
     )
 
 
-@app.route("/api/v1.0/precipitaton")
+@app.route("/api/v1.0/Precipitaton")
 def precipitation():
     results = (session.query(Measurement.date, Measurement.prcp, Measurement.station)
                       .filter(Measurement.date > yearBefore)
@@ -71,14 +70,14 @@ def precipitation():
     return jsonify(precipData)
 
 
-@app.route("/api/v1.0/stations")
+@app.route("/api/v1.0/Stations")
 def stations():
     results = session.query(Station.name).all()
     all_stations = list(np.ravel(results))
     return jsonify(all_stations)
 
 
-@app.route("/api/v1.0/temperature")
+@app.route("/api/v1.0/Temperature")
 def temperature():
     results = (session.query(Measurement.date, Measurement.tobs, Measurement.station)
                       .filter(Measurement.date > yearBefore)
